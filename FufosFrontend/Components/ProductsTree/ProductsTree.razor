@@ -1,6 +1,11 @@
 @using FufosFrontend.Services
 @using FufosEntities = FufosEntities.Entities
 
+<!-- 
+    Esto es un arbol, donde la raíz es la categoría y los hijos son los platos
+    de esa categoria
+ -->
+
 <div>
     <RadzenTree Data="@Data">
         <RadzenTreeLevel TextProperty="Name" ChildrenProperty="Products">

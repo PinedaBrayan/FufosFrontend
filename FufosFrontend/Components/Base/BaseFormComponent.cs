@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace FufosFrontend.Components.Base;
 
+// Clase base para los formularios de las tablas
 public abstract class BaseFormComponent<T> : ComponentBase
 {
     [Inject] public TranslatorService TranslatorService { get; set; } = null!;

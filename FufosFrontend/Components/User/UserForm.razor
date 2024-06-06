@@ -5,16 +5,20 @@
 
 @inherits BaseFormComponent<User>
 
+<!-- Este es el formulario para los usuarios -->
+<!-- NO SE PUEDE CREAR UN USUARIO DESDE EL CRUD, SE TIENE QUE REGISTRAR Y EL ADMIN LO EDITA -->
+
 <div class="mt-2">
     
     <RadzenRow Gap="1rem" RowGap="0.5rem">
-
+        <!-- Tiene el nombre -->
         <RadzenColumn SizeMD="4" class="d-flex flex-column custom-column">
             <RadzenLabel Text="Nombre" />
             <RadzenTextBox @bind-Value="@Entity.FullName" Disabled="@(ViewType == ViewType.Detail)" />
             <ValidationMessage For="@(() => @Entity.FullName)" />
         </RadzenColumn>
 
+        <!-- Tiene el estado (Activo, inactivo) -->
         <RadzenColumn SizeMD="4" class="d-flex flex-column custom-column">
             <RadzenLabel Text="Estado" />
             <RadzenSelectBar @bind-Value=@Entity.Status TValue="EnumRecordStatus" Disabled="@(ViewType == ViewType.Detail)">
@@ -28,6 +32,7 @@
             <ValidationMessage For="@(() => @Entity.Status)" />
         </RadzenColumn>
 
+        <!-- Un check para ver si es admin -->
         <RadzenColumn SizeMD="4" class="d-flex flex-column justify-content-center custom-column">
             <div>
                 <RadzenLabel Text="¿Es administrador?" />
@@ -36,6 +41,7 @@
             </div>
         </RadzenColumn>
 
+        <!-- Un check para ver si es empleado -->
         <RadzenColumn SizeMD="4" class="d-flex flex-column justify-content-center custom-column">
             <div>
                 <RadzenLabel Text="¿Es empleado?" />

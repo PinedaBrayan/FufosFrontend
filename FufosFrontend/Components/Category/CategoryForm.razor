@@ -4,6 +4,9 @@
 
 @inherits BaseFormComponent<Category>
 
+<!-- Este es el formulario para las categorias de los platos -->
+<!-- Sólo tiene el nombre -->
+
 <div class="d-flex flex-column w-50">
     <RadzenLabel Text="Nombre" />
     <RadzenTextBox @bind-Value="@Entity.Name" Disabled="@(ViewType == ViewType.Detail)" />
