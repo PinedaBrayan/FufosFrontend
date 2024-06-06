@@ -1,0 +1,16 @@
+{
+    "Category.Name": "Nombre",
+    "Enum.ViewType.Create": "Creación",
+    "Enum.ViewType.Edit": "Edición",
+    "Enum.ViewType.Create.Description": "Se creó el registro exitosamente",
+    "Enum.ViewType.Edit.Description": "Se editó el registro exitosamente",
+    "Enum.EnumRecordStatus.Active": "Activo",
+    "Enum.EnumRecordStatus.Inactive": "Inactivo",
+    "Product.Name": "Nombre",
+    "Product.Category": "Categoría",
+    "User.FullName": "Nombre",
+    "User.Status": "Estado",
+    "User.IsAdmin": "Es administrador",
+    "Boolean.False": "No",
+    "Boolean.True": "Sí"
+}

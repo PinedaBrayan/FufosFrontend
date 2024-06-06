@@ -1,0 +1,34 @@
+[
+    {
+        "Icon": "home",
+        "Name": "Home",
+        "Url": "/"
+    },
+    {
+        "Icon": "home",
+        "Name": "Carta",
+        "SubMenu": [
+            {
+                "Icon": "home",
+                "Name": "Categorias",
+                "Url": "/Category"
+            },
+            {
+                "Icon": "home",
+                "Name": "Platos",
+                "Url": "/Product"
+            }
+        ]
+    },
+    {
+        "Icon": "home",
+        "Name": "Usuarios",
+        "SubMenu": [
+            {
+                "Icon": "home",
+                "Name": "Usuarios",
+                "Url": "/User"
+            }
+        ]
+    }
+]
