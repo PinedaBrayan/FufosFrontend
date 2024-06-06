@@ -9,13 +9,17 @@
         <Found Context="routeData">
             <CascadingValue Value="routeData">
                 @{
+                    <!-- Viene y mira si el .razor tiene el [Authorize] -->
                     var AuthorizeValue = Attribute.GetCustomAttribute(routeData.PageType, typeof(AuthorizeAttribute));
                     var authorize = AuthorizeValue != null;
+                    <!-- Trae el nombre del rol que debe entrar, está en el Roles("Admin") -->
                     var Roles = AuthorizeValue?.GetType().GetProperty("Roles")?.GetValue(AuthorizeValue);
                 }
+                <!-- Si la vista pide autorizacion, entra en el condicional, sino, renderiza sin problema -->
                 @if (authorize && IsReady)
                 {
                     <AuthorizeView>
+                        <!-- Si hay usuario, llega a la componente Authorized -->
                         <Authorized Context="context">
                             @if(Roles is null || context.User.FindFirst(ClaimTypes.Role)!.Value == Roles.ToString())
                             {
@@ -57,6 +61,12 @@
     {
         await base.OnAfterRenderAsync(firstRender);
         if(firstRender){
+
+            /*
+                Al iniciar la vista, viene a verificar el estado del usuario autenticado, si no hay, pues no hay usuario,
+                en caso de que haya usuario logueado, continua el flujo, habiendo pasado por la clase CustomAuthenticationStateProvider
+            */
+
             await StateProvider.GetAuthenticationStateAsync();
             IsReady = true;
             StateHasChanged();

@@ -17,6 +17,7 @@ public class CustomAuthenticationStateProvider(ILocalStorageService localStorage
     {
         try
         {
+            // Se trae del localstorage aquel item cuya llave es "usertoken"
             var token = await localStorageService.GetItemAsync<string>("usertoken");
 
             if(string.IsNullOrEmpty(token))
@@ -34,6 +35,7 @@ public class CustomAuthenticationStateProvider(ILocalStorageService localStorage
                 Role = $"{EnumRoles.Employee}";
             }
 
+            // Prepara la informacion de la sesion
             var claims = new ClaimsPrincipal(new ClaimsIdentity(
                 [
                     new(ClaimTypes.NameIdentifier, $"{User.Rowid}"),
@@ -43,6 +45,7 @@ public class CustomAuthenticationStateProvider(ILocalStorageService localStorage
                 ]
             , "JWTAuth"));
 
+            // Retorna la sesion con el usuario ya autenticado
             return await Task.FromResult(new AuthenticationState(claims));
         }
         catch

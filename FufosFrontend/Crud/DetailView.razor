@@ -1,0 +1,96 @@
+<!-- ViewRoute es una variable que tiene el nombre de la ruta -->
+<!-- detail es una ruta -->
+<!-- Rowid es el identificador del registro en la bd -->
+@page "/{ViewRoute}/detail/{Rowid}"
+
+<!-- El atributo Authorize restringe (EN EL APP.razor) a que sólo accedan los usuarios logueados -->
+<!-- Roles filtra a que el rol del usuario sea "Admin" -->
+@attribute [Authorize(Roles = nameof(EnumRoles.Admin))]
+@using Fufos.Globals.Enums
+
+@inherits DynamicBaseView
+
+@if(ViewIsReady && RouteIsValid && Entity is not null && ((dynamic) Entity).Rowid > 0)
+{
+    <PageTitle>Ver @Module.SingularName</PageTitle>
+
+    <h3>@Module.SingularName</h3>
+
+    <RadzenStack Orientation="@Orientation.Horizontal" JustifyContent="@JustifyContent.End">
+        <RadzenButton Click="NavigateToList" Variant="Variant.Flat" Text="Ir a la lista" ButtonStyle="ButtonStyle.Primary" />
+    </RadzenStack>
+
+    <EditForm id="@FormId" 
+        OnValidSubmit="@HandleValidSubmit"
+        OnInvalidSubmit="@HandleInvalidSubmit" 
+        EditContext="@EditFormContext">
+
+        <CascadingValue Value="@this">
+            <CascadingValue Value="@ViewType">
+                @Module.GetForm()
+            </CascadingValue>
+        </CascadingValue>
+
+    </EditForm>
+}else if(ViewIsReady && (!RouteIsValid || ((dynamic?) Entity)?.Rowid == 0))
+{
+    <p>Ruta inválida</p>
+}
+else
+{
+    <p>Cargando...</p>
+}
+
+@code
+{
+    public override ViewType ViewType {get; set;} = ViewType.Detail;
+    protected override void OnInitialized()
+    {
+        _ = InitView();
+
+        base.OnInitialized();
+    }
+
+    private async Task InitView()
+    {
+        LastViewRoute = ViewRoute;
+        RouteIsValid = ApiService.EndPointIsSaved(ViewRoute);
+
+        if(RouteIsValid)
+        {
+            SearchModule();
+        }else
+        {
+            ViewIsReady = true;
+            return;
+        }
+
+        SetEditForm();
+        SetEntity();
+
+        var ForeignKeys = Entity.GetType()
+            .GetProperties()
+            .Where(x => x.PropertyType.Namespace?.EndsWith(".Entities") ?? false)
+            .Select(x => x.PropertyType.Name)
+            .ToArray();
+
+        await Module.GetItem(Rowid, ForeignKeys);
+
+        SetEntity();
+
+        ViewIsReady = true;
+
+        StateHasChanged();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if(ViewRoute != LastViewRoute)
+        {
+            _ = InitView();
+            StateHasChanged();
+        }
+
+        base.OnParametersSet();
+    }
+}

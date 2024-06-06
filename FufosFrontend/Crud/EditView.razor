@@ -1,0 +1,81 @@
+@page "/{ViewRoute}/edit/{Rowid}"
+@attribute [Authorize(Roles = nameof(EnumRoles.Admin))]
+@using Fufos.Globals.Enums
+
+@inherits DynamicBaseView
+
+@if(ViewIsReady && RouteIsValid && Entity is not null && ((dynamic) Entity).Rowid > 0)
+{
+    <PageTitle>Editar @Module.SingularName</PageTitle>
+    
+    <h3>Editar @Module.SingularName</h3>
+
+    <RadzenStack Orientation="@Orientation.Horizontal" JustifyContent="@JustifyContent.End">
+        <RadzenButton Disabled="@IsBusy" Click="NavigateToList" Variant="Variant.Flat" Text="Cancelar" ButtonStyle="ButtonStyle.Warning" />
+        <RadzenButton form="@FormId" ButtonType="ButtonType.Submit" Variant="Variant.Flat" Text="Guardar" ButtonStyle="ButtonStyle.Primary" IsBusy=@IsBusy />
+    </RadzenStack>
+
+    <EditForm id="@FormId" 
+        OnValidSubmit="@HandleValidSubmit"
+        OnInvalidSubmit="@HandleInvalidSubmit" 
+        EditContext="@EditFormContext">
+
+        <CascadingValue Value="@this">
+            <CascadingValue Value="@ViewType">
+                @Module.GetForm()
+            </CascadingValue>
+        </CascadingValue>
+
+    </EditForm>
+}else if(ViewIsReady && (!RouteIsValid || ((dynamic?) Entity)?.Rowid == 0))
+{
+    <p>Ruta inválida</p>
+}
+else
+{
+    <p>Cargando...</p>
+}
+
+@code
+{
+    public override ViewType ViewType {get; set;} = ViewType.Edit;
+    protected override void OnInitialized()
+    {
+        _ = InitView();
+
+        base.OnInitialized();
+    }
+
+    private async Task InitView()
+    {
+        ViewIsReady = true;
+        LastViewRoute = ViewRoute;
+        RouteIsValid = ApiService.EndPointIsSaved(ViewRoute);
+
+        if(RouteIsValid)
+        {
+            SearchModule();
+        }else
+        {
+            return;
+        }
+
+        SetEditForm();
+        await Module.GetItem(Rowid);
+
+        SetEntity();
+
+        StateHasChanged();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if(ViewRoute != LastViewRoute)
+        {
+            _ = InitView();
+            StateHasChanged();
+        }
+
+        base.OnParametersSet();
+    }
+}
