@@ -3,9 +3,7 @@
 
 @attribute [Authorize(Roles = nameof(EnumRoles.Admin))]
 
-@inherits DynamicBaseView
-
-@if(ViewIsReady && RouteIsValid && Entity is not null)
+ady && RouteIsValid && Entity is not null)
 {
     <PageTitle>Crear @Module.SingularName</PageTitle>
     
