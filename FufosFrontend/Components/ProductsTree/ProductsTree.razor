@@ -1,0 +1,29 @@
+@using FufosFrontend.Services
+@using FufosEntities = FufosEntities.Entities
+
+<!-- 
+    Esto es un arbol, donde la raíz es la categoría y los hijos son los platos
+    de esa categoria
+ -->
+
+<div>
+    <RadzenTree Data="@Data">
+        <RadzenTreeLevel TextProperty="Name" ChildrenProperty="Products">
+            <Template Context="Item">
+                <i class="fa-solid fa-utensils mr-2" />
+                <span>@Item.Value</span>
+            </Template>
+        </RadzenTreeLevel>
+    </RadzenTree>
+</div>
+
+@code
+{
+    [Inject] public ApiService ApiService {get; set;} = null!;
+    private List<FufosEntities.Category> Data {get; set;} = null!;
+    protected override async Task OnInitializedAsync()
+    {
+        Data = await ApiService.GetAll<FufosEntities.Category>("Category", "Products");
+        await base.OnInitializedAsync();
+    }
+}

@@ -1,0 +1,21 @@
+@page "/logout"
+@using FufosFrontend.Services
+
+@inject NavigationManager NavigationManager
+@inject UserAuthenticationService UserAuthenticationService
+@inject IHttpContextAccessor HttpContextAccessor
+
+@code
+{
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await UserAuthenticationService.Logout(HttpContextAccessor.HttpContext!);
+            NavigationManager.NavigateTo("/", true, true);
+        }catch
+        {
+            //Do nothing
+        }
+    }
+}

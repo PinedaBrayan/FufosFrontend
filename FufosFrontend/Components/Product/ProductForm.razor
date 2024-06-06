@@ -1,0 +1,41 @@
+@using FufosFrontend.Components.Base
+@using FufosEntities.Entities
+@using Fufos.Globals.Enums
+@using FufosFrontend.Components.EntityField
+
+@inherits BaseFormComponent<Product>
+
+<!-- Este es el formulario para los platos -->
+
+<div class="mt-2">
+    
+    <RadzenRow Gap="1rem" RowGap="0.5rem">
+        <!-- Tiene el nombre -->
+        <RadzenColumn class="d-flex flex-column custom-column">
+            <RadzenLabel Text="Nombre" />
+            <RadzenTextBox @bind-Value="@Entity.Name" Disabled="@(ViewType == ViewType.Detail)" />
+            <ValidationMessage For="@(() => @Entity.Name)" />
+        </RadzenColumn>
+
+        <!-- Tiene la categoría del plato, muestra un desplegable para escoger la categoria del producto -->
+        <RadzenColumn class="d-flex flex-column custom-column">
+            <RadzenLabel Text="Categoría" />
+            @if(ViewType == ViewType.Detail)
+            {
+                <RadzenTextBox Value="@Entity.Category?.ToString()" Disabled="true" />
+            }else
+            {
+                <EntityField @bind-Value="@Entity" TValue="Product" TProperty="Category" PropertyName="@nameof(Product.Category)" EndPoint="Category" />
+                <ValidationMessage For="@(() => @Entity.Category)" />
+            }
+        </RadzenColumn>
+
+        <!-- Tiene la descripcion del plato -->
+        <RadzenColumn Size="12" class="d-flex flex-column custom-column">
+            <RadzenLabel Text="Descripción" />
+            <RadzenTextBox @bind-Value="@Entity.Description" Disabled="@(ViewType == ViewType.Detail)" />
+            <ValidationMessage For="@(() => @Entity.Description)" />
+        </RadzenColumn>
+    </RadzenRow>
+
+</div>

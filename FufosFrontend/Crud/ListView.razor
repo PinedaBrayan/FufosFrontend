@@ -1,0 +1,241 @@
+@page "/{ViewRoute}"
+@attribute [Authorize(Roles = nameof(EnumRoles.Admin))]
+
+@inherits DynamicBaseView
+
+@using System.Linq.Dynamic.Core
+@using Fufos.Globals.Enums
+
+@if(ViewIsReady && RouteIsValid && Entity is not null && columns.Count > 0)
+{
+    <PageTitle>@Module.PluralName</PageTitle>
+    
+    <h3>@Module.PluralName</h3>
+
+    <RadzenDataGrid @bind-Value=@selectedItems Data="@data" TItem="IDictionary<string, object>" ColumnWidth="200px"
+                AllowFiltering="true" IsLoading="Loading" FilterPopupRenderMode="PopupRenderMode.OnDemand" FilterMode="FilterMode.Advanced" AllowPaging="true" AllowSorting="true">
+        <HeaderTemplate>
+            @if(!IgnoreCreate)
+            {
+                <RadzenButton Click=@(args => Create()) Text="Crear" ButtonStyle="ButtonStyle.Primary" />
+            }
+        </HeaderTemplate>
+        <EmptyTemplate>
+            <span>No se encontró información</span>
+        </EmptyTemplate>
+        <Columns>
+            <RadzenDataGridColumn TItem="IDictionary<string, object>" Width="100px" Title="Acciones" Filterable="false" Sortable="false" TextAlign="TextAlign.Center">
+                <Template Context="Item">
+                    <div class="d-flex justify-content-around">
+                        <RadzenButton Click=@(args => OnEdit(Item)) ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" >
+                            <div>
+                                <i class="fa-solid fa-pen"></i>
+                            </div>
+                        </RadzenButton>
+                        <RadzenButton Click=@(args => OnDelete(Item)) ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall">
+                            <div>
+                                <i class="fa-solid fa-trash"></i>
+                            </div>
+                        </RadzenButton>
+                        <RadzenButton Click=@(args => OnDetail(Item)) ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall">
+                            <div>
+                                <i class="fa-solid fa-eye"></i>
+                            </div>
+                        </RadzenButton>
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+            @foreach (var column in columns)
+            {
+                <RadzenDataGridColumn Width="200px" @key=@column.Key Title="@TranslatorService.GetMessage($"{Entity.GetType().Name}.{@column.Key}")" Type="column.Value"
+                                    Property="@GetColumnPropertyExpression(column.Key, column.Value)">
+                    <Template>
+                        @if(column.Value.IsEnum)
+                        {
+                            @TranslatorService.GetMessage($"Enum.{column.Value.Name}.{context[@column.Key]}")
+                        }else if(column.Value == typeof(bool))
+                        {
+                            @TranslatorService.GetMessage($"Boolean.{context[@column.Key]}")
+                        }
+                        else
+                        {
+                            @context[@column.Key]
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+            }
+        </Columns>
+    </RadzenDataGrid>
+}else if(ViewIsReady && !RouteIsValid)
+{
+    <p>Ruta inválida</p>
+}
+else
+{
+    <p>Cargando...</p>
+}
+
+@code {
+    public override ViewType ViewType {get; set;} = ViewType.List;
+    IList<IDictionary<string, object>> selectedItems = null!;
+    public IEnumerable<IDictionary<string, object?>> data { get; set; } = null!;
+
+    public IDictionary<string, Type> columns { get; set; } = null!;
+    bool Loading {get; set;}
+
+    public string GetColumnPropertyExpression(string name, Type type)
+    {
+        var expression = $@"it[""{name}""].ToString()";
+
+        if (type == typeof(int))
+        {
+            return $"int.Parse({expression})";
+        }
+        else if (type == typeof(DateTime))
+        {
+            return $"DateTime.Parse({expression})";
+        }
+        else if (type.IsEnum)
+        {
+            return $@"Int32(Enum.Parse(it[""{name}""].GetType(), {expression}))";
+        }
+
+        return expression;
+    }
+
+    private async Task InitView()
+    {
+        if(Loading)
+            return;
+
+        Loading = true;
+        columns?.Clear();
+        LastViewRoute = ViewRoute;
+        RouteIsValid = ApiService.EndPointIsSaved(ViewRoute);
+
+        if(RouteIsValid)
+        {
+            SearchModule();
+        }else
+        {
+            ViewIsReady = true;
+            return;
+        }
+
+        SetEntity();
+        columns = Module.GridColumns;
+
+        StateHasChanged();
+
+        var ForeignKeys = columns.Where(x => x.Value.Namespace?.EndsWith(".Entities") ?? false)
+            .Select(x => x.Value.Name)
+            .ToArray();
+
+        var Data = await Module.GetData(ForeignKeys);
+        var EntityType = Entity.GetType();
+        ViewIsReady = true;
+
+        data = Data.Select(i =>
+        {
+            var row = new Dictionary<string, object?>();
+
+            var Rowid = EntityType.GetProperty("Rowid")?
+                .GetValue(i);
+
+            if(Rowid is not null)
+                row.TryAdd("Rowid", Rowid);
+
+            foreach (var column in columns)
+            {
+                var Value = EntityType.GetProperty(column.Key)!
+                    .GetValue(i);
+                row.TryAdd(
+                    column.Key,
+                    Value
+                );
+            }
+
+            return row;
+        });
+
+        Loading = false;
+
+        StateHasChanged();
+    }
+
+    protected override void OnInitialized()
+    {
+        _ = InitView();
+
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if(ViewRoute != LastViewRoute)
+        {
+            ViewIsReady = false;
+            _ = InitView();
+            StateHasChanged();
+        }
+
+        base.OnParametersSet();
+    }
+
+    void Create()
+    {
+        NavigationManager.NavigateTo($"{ViewRoute}/create");
+    }
+
+    void OnEdit(IDictionary<string, object> Item)
+    {
+        Item.TryGetValue("Rowid", out var Rowid);
+
+        if(Rowid is null)
+            return;
+        
+        NavigationManager.NavigateTo($"{ViewRoute}/edit/{Rowid}");
+    }
+
+    async Task OnDelete(IDictionary<string, object> Item)
+    {
+        Item.TryGetValue("Rowid", out var Rowid);
+
+        if(Rowid is null)
+            return;
+
+        var Result = await Module.Delete(Rowid);
+
+        if(!Result)
+        {
+            NotificationService.Notify(new () 
+                { 
+                    Severity = NotificationSeverity.Error, 
+                    Summary = "Eliminar", 
+                    Detail = "No se pudo eliminar el registro", 
+                    Duration = 4000 
+                });
+            return;
+        }
+
+        NotificationService.Notify(new () 
+            { 
+                Severity = NotificationSeverity.Success, 
+                Summary = "Eliminar", 
+                Detail = "El registro fue eliminado exitosamente", 
+                Duration = 4000 
+            });
+
+        _ = InitView();
+    }
+
+    void OnDetail(IDictionary<string, object> Item)
+    {
+        Item.TryGetValue("Rowid", out var Rowid);
+
+        if(Rowid is null)
+            return;
+        
+        NavigationManager.NavigateTo($"{ViewRoute}/detail/{Rowid}");
+    }
+}

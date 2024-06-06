@@ -1,0 +1,75 @@
+﻿@using System.Net
+@using FufosFrontend.Services
+@using System.Security.Claims
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider StateProvider
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <CascadingValue Value="routeData">
+                @{
+                    <!-- Viene y mira si el .razor tiene el [Authorize] -->
+                    var AuthorizeValue = Attribute.GetCustomAttribute(routeData.PageType, typeof(AuthorizeAttribute));
+                    var authorize = AuthorizeValue != null;
+                    <!-- Trae el nombre del rol que debe entrar, está en el Roles("Admin") -->
+                    var Roles = AuthorizeValue?.GetType().GetProperty("Roles")?.GetValue(AuthorizeValue);
+                }
+                <!-- Si la vista pide autorizacion, entra en el condicional, sino, renderiza sin problema -->
+                @if (authorize && IsReady)
+                {
+                    <AuthorizeView>
+                        <!-- Si hay usuario, llega a la componente Authorized -->
+                        <Authorized Context="context">
+                            @if(Roles is null || context.User.FindFirst(ClaimTypes.Role)!.Value == Roles.ToString())
+                            {
+                                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+                                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+                            }else
+                            {
+                                NavigationManager.NavigateTo($"/", true, true);
+                            }
+                        </Authorized>
+                        <NotAuthorized>
+                            @{
+                                NavigationManager.NavigateTo($"/login", true, true);
+                            }
+                        </NotAuthorized>
+                    </AuthorizeView>
+                }
+                else if (IsReady)
+                {
+                    <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+                    <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+                }
+            </CascadingValue>
+        </Found>
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+@code
+{
+    bool IsReady { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if(firstRender){
+
+            /*
+                Al iniciar la vista, viene a verificar el estado del usuario autenticado, si no hay, pues no hay usuario,
+                en caso de que haya usuario logueado, continua el flujo, habiendo pasado por la clase CustomAuthenticationStateProvider
+            */
+
+            await StateProvider.GetAuthenticationStateAsync();
+            IsReady = true;
+            StateHasChanged();
+        }
+    }
+}

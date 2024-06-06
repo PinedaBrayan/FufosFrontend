@@ -1,0 +1,107 @@
+@using FufosFrontend.DTOS
+@using FufosFrontend.Services
+
+@inject NavigationManager Manager
+
+@if(MenuItems is not null)
+{
+    <RadzenDropDown TValue="string" @ref=@radzenDropDown @bind-SearchText=SearchText FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                    Data=@MenuItems TextProperty="Name" ValueProperty="Url" AllowClear="true" Value=value ValueChanged="Navigate" Style="width: 100%; max-width: 400px;" Name="DropDownFiltering" Placeholder="Buscar...">
+        <Template Context="Item">
+            <span>
+                @if(Item.Path.Count > 0)
+                {
+                    @foreach(var Path in Item.Path)
+                    {
+                        @($"{Path} / ")  
+                    }
+                    @Item.Name
+                }else
+                {
+                    @Item.Name
+                }
+            </span>
+        </Template>
+        <ValueTemplate Context="Item">
+            @Item.Name
+        </ValueTemplate>
+    </RadzenDropDown>
+}
+
+@code {
+    [Inject] public LocalDataService DataService {get; set;} = null!;
+    RadzenDropDown<string> radzenDropDown {get; set;} = null!;
+    List<MenuItemDTO> MenuItems {get; set;} = null!;
+    string? value;
+    string? searchTextStatus;
+
+    protected override void OnInitialized()
+    {
+        var Aux = DataService.GetLocalData<List<MenuItemDTO>>("menu.json");
+        MenuItems = AnalizeItems(Aux);
+        searchTextStatus = $"Search text: {searchText}";
+        base.OnInitialized();
+    }
+
+    void Navigate(object Url)
+    {
+        try
+        {
+            value = (string)Url;
+
+            if(string.IsNullOrEmpty(value))
+                return;
+
+            Manager.NavigateTo(value);
+        }catch
+        {
+
+        }
+    }
+
+    private List<MenuItemDTO> AnalizeItems(ICollection<MenuItemDTO> Items, string Path = "")
+    {
+        List<MenuItemDTO> Result = new();
+        foreach(var Item in Items)
+        {
+            var Clone = (MenuItemDTO) Item.DeepCopy();
+            if (Clone.SubMenu is not null)
+            {
+                var SubMenus = AnalizeItems(Clone.SubMenu, Clone.Name);
+
+                if(SubMenus.Count > 0)
+                    Result.AddRange(SubMenus);
+                continue;
+            }
+            
+            if (string.IsNullOrEmpty(Clone.Url))
+                continue;
+
+            if(!string.IsNullOrEmpty(Path))
+                Clone.Path.Add(Path);
+
+            Result.Add(Clone);
+        }
+
+        return Result;
+    }
+
+    string searchText = "";
+
+    public string SearchText
+    {
+        get
+        {
+            return searchText;
+        }
+        set
+        {
+            if (searchText != value)
+            {
+                searchText = value;
+                searchTextStatus = $"Search text: {searchText}";
+                Console.WriteLine($"Search text: {radzenDropDown.SearchText}");
+            }
+        }
+    }
+}
