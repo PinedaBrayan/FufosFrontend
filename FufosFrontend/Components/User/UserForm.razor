@@ -1,0 +1,49 @@
+@using Appointment.Globals.Enums
+@using FufosFrontend.Components.Base
+@using FufosEntities.Entities
+@using Fufos.Globals.Enums
+
+@inherits BaseFormComponent<User>
+
+<div class="mt-2">
+    
+    <RadzenRow Gap="1rem" RowGap="0.5rem">
+
+        <RadzenColumn SizeMD="4" class="d-flex flex-column custom-column">
+            <RadzenLabel Text="Nombre" />
+            <RadzenTextBox @bind-Value="@Entity.FullName" Disabled="@(ViewType == ViewType.Detail)" />
+            <ValidationMessage For="@(() => @Entity.FullName)" />
+        </RadzenColumn>
+
+        <RadzenColumn SizeMD="4" class="d-flex flex-column custom-column">
+            <RadzenLabel Text="Estado" />
+            <RadzenSelectBar @bind-Value=@Entity.Status TValue="EnumRecordStatus" Disabled="@(ViewType == ViewType.Detail)">
+                <Items>
+                    @foreach(var Item in Enum.GetValues<EnumRecordStatus>())
+                    {
+                        <RadzenSelectBarItem Value="@Item" Text="@TranslatorService.GetMessage($"Enum.EnumRecordStatus.{Item}")" />
+                    }
+                </Items>
+            </RadzenSelectBar>
+            <ValidationMessage For="@(() => @Entity.Status)" />
+        </RadzenColumn>
+
+        <RadzenColumn SizeMD="4" class="d-flex flex-column justify-content-center custom-column">
+            <div>
+                <RadzenLabel Text="¿Es administrador?" />
+                <RadzenCheckBox @bind-Value="@Entity.IsAdmin" Disabled="@(ViewType == ViewType.Detail)" />
+                <ValidationMessage For="@(() => @Entity.IsAdmin)" />
+            </div>
+        </RadzenColumn>
+
+        <RadzenColumn SizeMD="4" class="d-flex flex-column justify-content-center custom-column">
+            <div>
+                <RadzenLabel Text="¿Es empleado?" />
+                <RadzenCheckBox @bind-Value="@Entity.IsEmployee" Disabled="@(ViewType == ViewType.Detail)" />
+                <ValidationMessage For="@(() => @Entity.IsEmployee)" />
+            </div>
+        </RadzenColumn>
+
+    </RadzenRow>
+
+</div>

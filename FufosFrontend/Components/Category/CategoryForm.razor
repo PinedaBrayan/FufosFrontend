@@ -1,0 +1,11 @@
+@using FufosFrontend.Components.Base
+@using FufosEntities.Entities
+@using Fufos.Globals.Enums
+
+@inherits BaseFormComponent<Category>
+
+<div class="d-flex flex-column w-50">
+    <RadzenLabel Text="Nombre" />
+    <RadzenTextBox @bind-Value="@Entity.Name" Disabled="@(ViewType == ViewType.Detail)" />
+    <ValidationMessage For="@(() => @Entity.Name)" />
+</div>

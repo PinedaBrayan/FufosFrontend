@@ -1,0 +1,107 @@
+
+@typeparam TValue
+@typeparam TProperty
+
+@using FufosFrontend.Services
+
+<div>
+    <RadzenDropDown TValue="object"
+        @bind-SearchText=SearchText 
+        FilterOperator="StringFilterOperator.StartsWith"
+        Placeholder="Buscar..."
+        TextProperty="@FilterBy"
+        ValueProperty="Rowid"
+        Data="Data"
+        Value=SelectedValue
+        class="w-100"
+        Name="@($"EntityFiltering-{Id}")"
+        @bind-SelectedItem="@SelectedItem"
+        AllowFiltering="true"
+        ValueChanged="SetValue"
+        Disabled="@ReadOnly"
+        AllowClear="true">
+
+        <EmptyTemplate>
+            <span>No hay datos</span>
+        </EmptyTemplate>
+
+        <Template Context="Item">
+            @if(CustomString is null)
+            {
+                @Item.ToString()
+            }else{
+                @CustomString(Item)
+            }
+        </Template>
+
+    </RadzenDropDown>
+</div>
+
+@code
+{
+    [Parameter] public TValue Value {get; set;} = default!;
+    [Parameter] public EventCallback<TValue> ValueChanged {get; set;}
+    [Parameter] public string PropertyName {get; set;} = null!;
+    [Parameter] public string EndPoint {get; set;} = null!;
+    [Parameter] public string FilterBy {get; set;} = "Name";
+    [Parameter] public Func<dynamic, string>? CustomString {get; set;}
+    [Parameter] public bool ReadOnly {get; set;}
+    [Inject] public ApiService ApiService {get; set;} = null!;
+
+    List<TProperty> Data {get; set;} = new();
+    bool Loading {get; set;}
+    string Id {get;set;} = $"{Guid.NewGuid()}";
+    string? SelectedValue {get; set;}
+    object? SelectedItem {get; set;}
+
+    string searchText = "";
+    public string SearchText
+    {
+        get
+        {
+            return searchText;
+        }
+        set
+        {
+            if (searchText != value)
+            {
+                searchText = value;
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        _ = Search();
+        base.OnInitialized();
+    }
+
+    async Task Search()
+    {
+        if(Loading)
+            return;
+
+        Loading = true;
+
+        Data = await ApiService.GetAll<TProperty>(EndPoint);
+
+        var PropertyType = typeof(TValue)
+            .GetProperty($"Rowid{PropertyName}")!;
+        var RowidProperty = typeof(TProperty).GetProperty("Rowid");
+
+        SelectedValue = $"{PropertyType.GetValue(Value)}";
+        SelectedItem = Data.FirstOrDefault(x => $"{RowidProperty?.GetValue(x)}" == SelectedValue);
+
+        StateHasChanged();
+
+        Loading = false;
+    }
+
+    void SetValue(object? Rowid)
+    {
+        var PropertyType = typeof(TValue)
+            .GetProperty($"Rowid{PropertyName}")!;
+
+        PropertyType.SetValue(Value, Rowid ?? default);
+    }
+}
