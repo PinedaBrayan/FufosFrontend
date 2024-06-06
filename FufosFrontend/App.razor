@@ -9,18 +9,18 @@
         <Found Context="routeData">
             <CascadingValue Value="routeData">
                 @{
-                    <!-- Viene y mira si el .razor tiene el [Authorize] -->
+                    // Viene y mira si el .razor tiene el [Authorize]
                     var AuthorizeValue = Attribute.GetCustomAttribute(routeData.PageType, typeof(AuthorizeAttribute));
                     var authorize = AuthorizeValue != null;
-                    <!-- Trae el nombre del rol que debe entrar, está en el Roles("Admin") -->
+                    // Trae el nombre del rol que debe entrar, está en el Roles("Admin")
                     var Roles = AuthorizeValue?.GetType().GetProperty("Roles")?.GetValue(AuthorizeValue);
                 }
-                <!-- Si la vista pide autorizacion, entra en el condicional, sino, renderiza sin problema -->
+                @* Si la vista pide autorizacion, entra en el condicional, sino, renderiza sin problema --> *@
                 @if (authorize && IsReady)
                 {
                     <AuthorizeView>
-                        <!-- Si hay usuario, llega a la componente Authorized -->
                         <Authorized Context="context">
+                            @* Si hay usuario, llega a la componente Authorized *@
                             @if(Roles is null || context.User.FindFirst(ClaimTypes.Role)!.Value == Roles.ToString())
                             {
                                 <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
