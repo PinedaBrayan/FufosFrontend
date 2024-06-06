@@ -10,7 +10,7 @@
         "SubMenu": [
             {
                 "Icon": "home",
-                "Name": "Categorias",
+                "Name": "Catálogo",
                 "Url": "/Category"
             },
             {
