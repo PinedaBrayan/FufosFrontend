@@ -1,0 +1,8 @@
+:root
+{
+    --back_login_primary: #000000;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: transparent !important;
+}

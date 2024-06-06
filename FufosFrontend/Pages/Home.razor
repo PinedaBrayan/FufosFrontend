@@ -1,0 +1,20 @@
+﻿@page "/"
+@using System.Security.Claims
+@using FufosFrontend.Components.ProductsTree
+
+<PageTitle>Home</PageTitle>
+
+<AuthorizeView>
+    <Authorized Context="context">
+        <span>Hola @context.User.FindFirst(ClaimTypes.Name)!.Value</span>
+    </Authorized>
+    <NotAuthorized>
+        <h1>Hola!!!</h1>
+        <span>BIENVENIDO A FUFOS</span>
+    </NotAuthorized>
+</AuthorizeView>
+
+<hr />
+
+<RadzenLabel Text="PLATOS" class="mb-2" />
+<ProductsTree />

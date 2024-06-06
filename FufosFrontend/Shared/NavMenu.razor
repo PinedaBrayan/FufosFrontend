@@ -1,0 +1,17 @@
+﻿
+<AuthorizeView>
+    <Authorized Context="context">
+        @if(Data is not null)
+        {
+            @foreach (var Item in Data)
+            {
+                <RadzenPanelMenuItem Text="@Item.Name" Icon="@Item.Icon" Click="@(() => Navigate(Item?.Url))">
+                    @if (Item.SubMenu is not null)
+                    {
+                        <NavMenu Data="@Item.SubMenu.ToList()" />
+                    }
+                </RadzenPanelMenuItem>
+            }
+        }
+    </Authorized>
+</AuthorizeView>

@@ -1,0 +1,65 @@
+﻿@using System.Net
+@using FufosFrontend.Services
+@using System.Security.Claims
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider StateProvider
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <CascadingValue Value="routeData">
+                @{
+                    var AuthorizeValue = Attribute.GetCustomAttribute(routeData.PageType, typeof(AuthorizeAttribute));
+                    var authorize = AuthorizeValue != null;
+                    var Roles = AuthorizeValue?.GetType().GetProperty("Roles")?.GetValue(AuthorizeValue);
+                }
+                @if (authorize && IsReady)
+                {
+                    <AuthorizeView>
+                        <Authorized Context="context">
+                            @if(Roles is null || context.User.FindFirst(ClaimTypes.Role)!.Value == Roles.ToString())
+                            {
+                                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+                                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+                            }else
+                            {
+                                NavigationManager.NavigateTo($"/", true, true);
+                            }
+                        </Authorized>
+                        <NotAuthorized>
+                            @{
+                                NavigationManager.NavigateTo($"/login", true, true);
+                            }
+                        </NotAuthorized>
+                    </AuthorizeView>
+                }
+                else if (IsReady)
+                {
+                    <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+                    <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+                }
+            </CascadingValue>
+        </Found>
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+@code
+{
+    bool IsReady { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if(firstRender){
+            await StateProvider.GetAuthenticationStateAsync();
+            IsReady = true;
+            StateHasChanged();
+        }
+    }
+}

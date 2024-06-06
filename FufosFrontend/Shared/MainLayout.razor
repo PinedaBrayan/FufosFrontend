@@ -1,0 +1,97 @@
+﻿@inherits LayoutComponentBase
+
+@inject NavigationManager Navigation
+
+<RadzenDialog />
+<RadzenComponents/>
+
+<div>
+    <RadzenLayout style="position: relative;grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'">
+        <RadzenHeader>
+            <RadzenStack class="header_layout" Orientation="Orientation.Horizontal" JustifyContent="@JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="0">
+                <RadzenSidebarToggle Click="@(() => {
+                    if(!IsExternalView)
+                    {
+                        sidebarExpanded = !sidebarExpanded;
+                    }
+                })" />
+
+                @if(!IsExternalView)
+                {
+                    <div class="w-25">
+                        <Search />
+                    </div>
+                }
+
+                <RadzenLabel Text="FUFOS" class="mr-3" @onclick="NavigateToHome" />
+            </RadzenStack>
+        </RadzenHeader>
+
+        @if(!IsExternalView)
+        {
+            <RadzenSidebar Responsive="false" @bind-Expanded="@sidebarExpanded" style="position: absolute; z-index: 3">
+                <RadzenStack AlignItems="AlignItems.End" Class="rz-p-2">
+                    <RadzenButton Icon="west" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
+                </RadzenStack>
+                <RadzenPanelMenu>
+                    <NavMenu />
+                </RadzenPanelMenu>
+                <div class="rz-p-4">
+                    <AuthorizeView>
+                        <Authorized>
+                            <RadzenButton Text="Cerrar sesión" ButtonType="@ButtonType.Submit" Click="@(() => Navigation.NavigateTo("/logout", true))" />
+                        </Authorized>
+                        <NotAuthorized>
+                            <RadzenButton Text="Iniciar sesión" ButtonType="@ButtonType.Submit" Click="@(() => Navigation.NavigateTo("/login", true))" />
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </div>
+            </RadzenSidebar>
+        }
+
+        <RadzenBody>
+            <div class="@(IsExternalView ? "" : "rz-card rz-variant-filled")">
+                <div class="rz-p-2">
+                    <ErrorBoundary>
+                        <ChildContent>
+                            <CascadingValue Value="this">
+                                @Body
+                            </CascadingValue>
+                        </ChildContent>
+                        <ErrorContent Context="Error">
+                            <p>Ocurrió un error</p>
+                            <p>@Error.Message</p>
+                            <p>@Error.InnerException</p>
+                            <p>@Error.StackTrace</p>
+                        </ErrorContent>
+                    </ErrorBoundary>
+                </div>
+            </div>
+        </RadzenBody>
+        @if (sidebarExpanded)
+        {
+            <div @onclick="@(() => sidebarExpanded = false)" class="rz-dialog-mask" style="position: absolute; z-index: 2"></div>
+        }
+    </RadzenLayout>
+</div>
+
+@code {
+    bool sidebarExpanded = false;
+    bool IsExternalView { get; set; }
+    [Inject] protected AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+    [CascadingParameter] RouteData RouteData { get; set; } = null!;
+
+    public void NavigateToHome()
+    {
+        if (IsExternalView)
+            return;
+
+        Navigation.NavigateTo("/");
+    }
+
+    public void SetExternalView(bool IsExternalView)
+    {
+        this.IsExternalView = IsExternalView;
+        StateHasChanged();
+    }
+}
